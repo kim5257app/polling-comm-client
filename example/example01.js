@@ -10,5 +10,11 @@ socket.on('disconnected', () => {
   console.log('disconnected');
 });
 
+socket.on('echo', (data) => {
+  console.log('echo:', JSON.stringify(data));
+});
+
 setInterval(() => {
-}, 1000);
+  console.log('emit');
+  socket.emit('echo', { message: 'TEST' });
+}, 2000);

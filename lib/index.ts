@@ -27,6 +27,8 @@ export default class Socket {
 
   public id: string = '';
 
+  private reconnTimer: NodeJS.Timeout | null = null;
+
   constructor(host: string, options?: Options) {
     // 연결 서버 설정
     this.host = host;
@@ -41,12 +43,13 @@ export default class Socket {
     });
 
     this.events.on('disconnected', () => {
-      this.events.emit('reconnect');
+      this.connected = false;
+      this.doReconnect();
     });
 
-    this.events.on('error', () => {
-      console.log('error');
-      this.doReconnect();
+    this.events.on('error', (error) => {
+      console.log('error', JSON.stringify(error));
+      this.events.emit('disconnected');
     });
 
     this.connect();
@@ -72,15 +75,15 @@ export default class Socket {
   }
 
   private doReconnect(): void {
-    if (this.reconnect) {
-      setTimeout(() => {
+    if (this.reconnTimer == null && this.reconnect) {
+      this.reconnTimer = setTimeout(() => {
         this.events.emit('reconnect');
+        this.reconnTimer = null;
       }, this.reconnTimeout);
     }
   }
 
   private wait(): void {
-    console.log('wait:', this.id, this.connected);
     if (this.id !== '' || this.connected) {
       Axios.default({
         url: `${this.host}/comm/wait`,
@@ -91,12 +94,11 @@ export default class Socket {
       }).then((resp) => {
         // 응답이 있으면 데이터가 있는거
         const { name, data } = resp.data;
-        this.events.emit(name, data);
+        this.events.emit(name, JSON.parse(data));
 
         // 다시 대기 요청
         this.wait();
       }).catch((error) => {
-        console.log('wait error:', error.response);
         if (error.response?.status === 410) {
           // 410 에러라면 재 연결
           this.connected = false;
@@ -110,22 +112,24 @@ export default class Socket {
   }
 
   emit(name: string, data: object): void {
-    Axios.default({
-      url: `${this.host}/comm/emit`,
-      method: 'post',
-      headers: {
-        id: this.id,
-        'Content-Type': 'application/json',
-      },
-      data: JSON.stringify({ name, data }),
-    }).then((resp) => {
-      // 전송 실패 시 에러 이벤트 전달
-      if (resp.data.result !== 'success') {
-        this.events.emit('error', Error.make(resp.data));
-      }
-    }).catch((error) => {
-      this.events.emit('error', error);
-    });
+    if (this.connected) {
+      Axios.default({
+        url: `${this.host}/comm/emit`,
+        method: 'post',
+        headers: {
+          id: this.id,
+          'Content-Type': 'application/json',
+        },
+        data: JSON.stringify({name, data}),
+      }).then((resp) => {
+        // 전송 실패 시 에러 이벤트 전달
+        if (resp.data.result !== 'success') {
+          this.events.emit('error', Error.make(resp.data));
+        }
+      }).catch((error) => {
+        this.events.emit('error', error);
+      });
+    }
   }
 
   on(name: string, cb: (data: object) => void): void {

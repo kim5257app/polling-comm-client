@@ -12,6 +12,7 @@ export default class Socket {
     private readonly cbList;
     private connected;
     id: string;
+    private reconnTimer;
     constructor(host: string, options?: Options);
     private connect;
     private doReconnect;

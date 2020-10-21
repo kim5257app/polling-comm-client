@@ -9,6 +9,7 @@ class Socket {
         this.cbList = new Map();
         this.connected = false;
         this.id = '';
+        this.reconnTimer = null;
         // 연결 서버 설정
         this.host = host;
         // 기본 값 설정
@@ -19,11 +20,12 @@ class Socket {
             this.connect();
         });
         this.events.on('disconnected', () => {
-            this.events.emit('reconnect');
-        });
-        this.events.on('error', () => {
-            console.log('error');
+            this.connected = false;
             this.doReconnect();
+        });
+        this.events.on('error', (error) => {
+            console.log('error', JSON.stringify(error));
+            this.events.emit('disconnected');
         });
         this.connect();
     }
@@ -44,14 +46,14 @@ class Socket {
         });
     }
     doReconnect() {
-        if (this.reconnect) {
-            setTimeout(() => {
+        if (this.reconnTimer == null && this.reconnect) {
+            this.reconnTimer = setTimeout(() => {
                 this.events.emit('reconnect');
+                this.reconnTimer = null;
             }, this.reconnTimeout);
         }
     }
     wait() {
-        console.log('wait:', this.id, this.connected);
         if (this.id !== '' || this.connected) {
             Axios.default({
                 url: `${this.host}/comm/wait`,
@@ -62,12 +64,11 @@ class Socket {
             }).then((resp) => {
                 // 응답이 있으면 데이터가 있는거
                 const { name, data } = resp.data;
-                this.events.emit(name, data);
+                this.events.emit(name, JSON.parse(data));
                 // 다시 대기 요청
                 this.wait();
             }).catch((error) => {
                 var _a;
-                console.log('wait error:', error.response);
                 if (((_a = error.response) === null || _a === void 0 ? void 0 : _a.status) === 410) {
                     // 410 에러라면 재 연결
                     this.connected = false;
@@ -81,22 +82,24 @@ class Socket {
         }
     }
     emit(name, data) {
-        Axios.default({
-            url: `${this.host}/comm/emit`,
-            method: 'post',
-            headers: {
-                id: this.id,
-                'Content-Type': 'application/json',
-            },
-            data: JSON.stringify({ name, data }),
-        }).then((resp) => {
-            // 전송 실패 시 에러 이벤트 전달
-            if (resp.data.result !== 'success') {
-                this.events.emit('error', js_error_1.default.make(resp.data));
-            }
-        }).catch((error) => {
-            this.events.emit('error', error);
-        });
+        if (this.connected) {
+            Axios.default({
+                url: `${this.host}/comm/emit`,
+                method: 'post',
+                headers: {
+                    id: this.id,
+                    'Content-Type': 'application/json',
+                },
+                data: JSON.stringify({ name, data }),
+            }).then((resp) => {
+                // 전송 실패 시 에러 이벤트 전달
+                if (resp.data.result !== 'success') {
+                    this.events.emit('error', js_error_1.default.make(resp.data));
+                }
+            }).catch((error) => {
+                this.events.emit('error', error);
+            });
+        }
     }
     on(name, cb) {
         if (!this.cbList.has(name)) {
