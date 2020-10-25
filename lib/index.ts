@@ -25,6 +25,8 @@ export default class Socket {
 
   private connected: boolean = false;
 
+  private closed: boolean = false;
+
   public id: string = '';
 
   private reconnTimer: NodeJS.Timeout | null = null;
@@ -43,6 +45,7 @@ export default class Socket {
     });
 
     this.events.on('disconnected', () => {
+      this.id = '';
       this.connected = false;
       this.doReconnect();
     });
@@ -75,7 +78,7 @@ export default class Socket {
   }
 
   private doReconnect(): void {
-    if (this.reconnTimer == null && this.reconnect) {
+    if (this.reconnTimer == null && this.reconnect && !this.close) {
       this.reconnTimer = setTimeout(() => {
         this.events.emit('reconnect');
         this.reconnTimer = null;
@@ -149,5 +152,10 @@ export default class Socket {
     } else {
       throw Error.makeFail('NOT_REGISTERED', 'Event has not registered');
     }
+  }
+
+  close(): void {
+    this.closed = true;
+    this.events.emit('disconnected');
   }
 }

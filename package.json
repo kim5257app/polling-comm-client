@@ -1,6 +1,6 @@
 {
   "name": "@kim5257/polling-comm-client",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Long Polling Communication Module",
   "main": "dist/index.js",
   "scripts": {
@@ -8,7 +8,8 @@
     "test": "mocha --reporter spec",
     "cover": "nyc node_modules/mocha/bin/_mocha test/*.js -- -R spec",
     "coveralls": "yarn cover --report lcovonly && type .\\coverage\\lcov.info | coveralls",
-    "example01": "node ./example/example01.js"
+    "example01": "node ./example/example01.js",
+    "example02": "node ./example/example02.js"
   },
   "repository": {
     "type": "git",
