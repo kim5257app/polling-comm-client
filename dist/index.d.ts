@@ -11,8 +11,10 @@ export default class Socket {
     private readonly events;
     private readonly cbList;
     private connected;
+    private closed;
     id: string;
     private reconnTimer;
+    private hookFns;
     constructor(host: string, options?: Options);
     private connect;
     private doReconnect;
@@ -20,5 +22,7 @@ export default class Socket {
     emit(name: string, data: object): void;
     on(name: string, cb: (data: object) => void): void;
     off(name: string): void;
+    close(): void;
+    hook(fn: (name: string, data: object) => void): void;
 }
 export {};

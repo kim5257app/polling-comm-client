@@ -8,8 +8,10 @@ class Socket {
         this.events = new events_1.EventEmitter(); // 이벤트 객체
         this.cbList = new Map();
         this.connected = false;
+        this.closed = false;
         this.id = '';
         this.reconnTimer = null;
+        this.hookFns = [];
         // 연결 서버 설정
         this.host = host;
         // 기본 값 설정
@@ -20,11 +22,11 @@ class Socket {
             this.connect();
         });
         this.events.on('disconnected', () => {
+            this.id = '';
             this.connected = false;
             this.doReconnect();
         });
         this.events.on('error', (error) => {
-            console.log('error', JSON.stringify(error));
             this.events.emit('disconnected');
         });
         this.connect();
@@ -46,7 +48,7 @@ class Socket {
         });
     }
     doReconnect() {
-        if (this.reconnTimer == null && this.reconnect) {
+        if (this.reconnTimer == null && this.reconnect && !this.close) {
             this.reconnTimer = setTimeout(() => {
                 this.events.emit('reconnect');
                 this.reconnTimer = null;
@@ -64,7 +66,12 @@ class Socket {
             }).then((resp) => {
                 // 응답이 있으면 데이터가 있는거
                 const { name, data } = resp.data;
-                this.events.emit(name, JSON.parse(data));
+                const objData = JSON.parse(data);
+                // hook 함수 호출
+                this.hookFns.forEach((fn) => {
+                    fn(name, objData);
+                });
+                this.events.emit(name, objData);
                 // 다시 대기 요청
                 this.wait();
             }).catch((error) => {
@@ -119,6 +126,14 @@ class Socket {
         else {
             throw js_error_1.default.makeFail('NOT_REGISTERED', 'Event has not registered');
         }
+    }
+    close() {
+        this.closed = true;
+        this.connected = false;
+        this.events.emit('disconnected');
+    }
+    hook(fn) {
+        this.hookFns.push(fn);
     }
 }
 exports.default = Socket;

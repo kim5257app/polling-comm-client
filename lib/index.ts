@@ -31,6 +31,8 @@ export default class Socket {
 
   private reconnTimer: NodeJS.Timeout | null = null;
 
+  private hookFns: ((event: string, data: object) => void)[] = [];
+
   constructor(host: string, options?: Options) {
     // 연결 서버 설정
     this.host = host;
@@ -51,7 +53,6 @@ export default class Socket {
     });
 
     this.events.on('error', (error) => {
-      console.log('error', JSON.stringify(error));
       this.events.emit('disconnected');
     });
 
@@ -97,7 +98,14 @@ export default class Socket {
       }).then((resp) => {
         // 응답이 있으면 데이터가 있는거
         const { name, data } = resp.data;
-        this.events.emit(name, JSON.parse(data));
+        const objData = JSON.parse(data);
+
+        // hook 함수 호출
+        this.hookFns.forEach((fn) => {
+          fn(name, objData);
+        });
+
+        this.events.emit(name, objData);
 
         // 다시 대기 요청
         this.wait();
@@ -156,6 +164,11 @@ export default class Socket {
 
   close(): void {
     this.closed = true;
+    this.connected = false;
     this.events.emit('disconnected');
+  }
+
+  hook(fn: (name: string, data: object) => void) {
+    this.hookFns.push(fn);
   }
 }
