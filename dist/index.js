@@ -23,8 +23,13 @@ class Socket {
         });
         this.events.on('disconnected', () => {
             this.id = '';
+            if (this.connected) {
+                this.doReconnect(0);
+            }
+            else {
+                this.doReconnect(this.reconnTimeout);
+            }
             this.connected = false;
-            this.doReconnect();
         });
         this.events.on('error', (error) => {
             this.events.emit('disconnected');
@@ -47,12 +52,12 @@ class Socket {
             this.events.emit('error', js_error_1.default.make(error));
         });
     }
-    doReconnect() {
-        if (this.reconnTimer == null && this.reconnect && !this.close) {
+    doReconnect(delay) {
+        if (this.reconnTimer == null && this.reconnect && !this.closed) {
             this.reconnTimer = setTimeout(() => {
                 this.events.emit('reconnect');
                 this.reconnTimer = null;
-            }, this.reconnTimeout);
+            }, delay);
         }
     }
     wait() {

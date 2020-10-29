@@ -1,6 +1,6 @@
 {
   "name": "@kim5257/polling-comm-client",
-  "version": "0.0.4",
+  "version": "0.0.6",
   "description": "Long Polling Communication Module",
   "main": "dist/index.js",
   "scripts": {

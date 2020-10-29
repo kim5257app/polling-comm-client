@@ -48,8 +48,15 @@ export default class Socket {
 
     this.events.on('disconnected', () => {
       this.id = '';
+
+      if (this.connected) {
+        this.doReconnect(0);
+      } else {
+        this.doReconnect(this.reconnTimeout);
+      }
+
       this.connected = false;
-      this.doReconnect();
+
     });
 
     this.events.on('error', (error) => {
@@ -78,12 +85,12 @@ export default class Socket {
     });
   }
 
-  private doReconnect(): void {
-    if (this.reconnTimer == null && this.reconnect && !this.close) {
+  private doReconnect(delay: number): void {
+    if (this.reconnTimer == null && this.reconnect && !this.closed) {
       this.reconnTimer = setTimeout(() => {
         this.events.emit('reconnect');
         this.reconnTimer = null;
-      }, this.reconnTimeout);
+      }, delay);
     }
   }
 
@@ -112,7 +119,6 @@ export default class Socket {
       }).catch((error) => {
         if (error.response?.status === 410) {
           // 410 에러라면 재 연결
-          this.connected = false;
           this.events.emit('disconnected', this);
         } else {
           // 다시 대기 요청
