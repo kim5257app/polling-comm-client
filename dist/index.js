@@ -32,7 +32,7 @@ class Socket {
             this.connected = false;
         });
         this.events.on('error', (error) => {
-            this.events.emit('disconnected');
+            this.eventEmit('disconnected');
         });
         this.connect();
     }
@@ -44,18 +44,18 @@ class Socket {
             if (resp.data.result === 'success') {
                 this.id = resp.data.clientId;
                 this.connected = true;
-                this.events.emit('connected', this);
+                this.eventEmit('connected', this);
                 this.wait();
             }
         }).catch((error) => {
             // 에러 발생 시 일정 시간 후 다시 시도
-            this.events.emit('error', js_error_1.default.make(error));
+            this.eventEmit('error', js_error_1.default.make(error));
         });
     }
     doReconnect(delay) {
         if (this.reconnTimer == null && this.reconnect && !this.closed) {
             this.reconnTimer = setTimeout(() => {
-                this.events.emit('reconnect');
+                this.eventEmit('reconnect');
                 this.reconnTimer = null;
             }, delay);
         }
@@ -71,20 +71,15 @@ class Socket {
             }).then((resp) => {
                 // 응답이 있으면 데이터가 있는거
                 const { name, data } = resp.data;
-                const objData = JSON.parse(data);
-                // hook 함수 호출
-                this.hookFns.forEach((fn) => {
-                    fn(name, objData);
-                });
-                this.events.emit(name, objData);
+                // data가 string이면 JSON 파싱
+                this.eventEmit(name, (typeof data === 'string') ? JSON.parse(data) : data);
                 // 다시 대기 요청
                 this.wait();
             }).catch((error) => {
                 var _a;
                 if (((_a = error.response) === null || _a === void 0 ? void 0 : _a.status) === 410) {
                     // 410 에러라면 재 연결
-                    this.connected = false;
-                    this.events.emit('disconnected', this);
+                    this.eventEmit('disconnected', this);
                 }
                 else {
                     // 다시 대기 요청
@@ -92,6 +87,13 @@ class Socket {
                 }
             });
         }
+    }
+    eventEmit(name, data) {
+        // hook 함수 호출
+        this.hookFns.forEach((fn) => {
+            fn(name, data);
+        });
+        this.events.emit(name, data);
     }
     emit(name, data) {
         if (this.connected) {
@@ -106,10 +108,10 @@ class Socket {
             }).then((resp) => {
                 // 전송 실패 시 에러 이벤트 전달
                 if (resp.data.result !== 'success') {
-                    this.events.emit('error', js_error_1.default.make(resp.data));
+                    this.eventEmit('error', js_error_1.default.make(resp.data));
                 }
             }).catch((error) => {
-                this.events.emit('error', error);
+                this.eventEmit('error', error);
             });
         }
     }
@@ -135,7 +137,7 @@ class Socket {
     close() {
         this.closed = true;
         this.connected = false;
-        this.events.emit('disconnected');
+        this.eventEmit('disconnected');
     }
     hook(fn) {
         this.hookFns.push(fn);

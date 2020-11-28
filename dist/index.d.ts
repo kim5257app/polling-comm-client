@@ -19,10 +19,11 @@ export default class Socket {
     private connect;
     private doReconnect;
     private wait;
+    private eventEmit;
     emit(name: string, data: object): void;
     on(name: string, cb: (data: object) => void): void;
     off(name: string): void;
     close(): void;
-    hook(fn: (name: string, data: object) => void): void;
+    hook(fn: (name: string, data?: object) => void): void;
 }
 export {};
