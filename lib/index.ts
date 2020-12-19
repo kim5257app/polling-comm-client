@@ -29,6 +29,8 @@ export default class Socket {
 
   public id: string = '';
 
+  private commHash: number = new Date().getTime();
+
   private reconnTimer: NodeJS.Timeout | null = null;
 
   private hookFns: ((event: string, data?: object) => void)[] = [];
@@ -69,6 +71,9 @@ export default class Socket {
   private connect(): void {
     Axios.default({
       url: `${this.host}/comm/connect`,
+      headers: {
+        'comm-hash': this.commHash,
+      },
       method: 'get',
     }).then((resp) => {
       if (resp.data.result === 'success') {
@@ -99,7 +104,10 @@ export default class Socket {
       Axios.default({
         url: `${this.host}/comm/wait`,
         method: 'get',
-        headers: { id: this.id },
+        headers: {
+          'comm-hash': this.commHash,
+          id: this.id
+        },
         params: { timestamp: new Date().getTime() },
         timeout: this.waitTimeout,
       }).then((resp) => {
@@ -141,6 +149,7 @@ export default class Socket {
         url: `${this.host}/comm/emit`,
         method: 'post',
         headers: {
+          'comm-hash': this.commHash,
           id: this.id,
           'Content-Type': 'application/json',
         },

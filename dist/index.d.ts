@@ -13,6 +13,7 @@ export default class Socket {
     private connected;
     private closed;
     id: string;
+    private commHash;
     private reconnTimer;
     private hookFns;
     constructor(host: string, options?: Options);

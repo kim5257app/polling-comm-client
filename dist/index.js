@@ -10,6 +10,7 @@ class Socket {
         this.connected = false;
         this.closed = false;
         this.id = '';
+        this.commHash = new Date().getTime();
         this.reconnTimer = null;
         this.hookFns = [];
         // 연결 서버 설정
@@ -39,6 +40,9 @@ class Socket {
     connect() {
         Axios.default({
             url: `${this.host}/comm/connect`,
+            headers: {
+                'comm-hash': this.commHash,
+            },
             method: 'get',
         }).then((resp) => {
             if (resp.data.result === 'success') {
@@ -65,7 +69,10 @@ class Socket {
             Axios.default({
                 url: `${this.host}/comm/wait`,
                 method: 'get',
-                headers: { id: this.id },
+                headers: {
+                    'comm-hash': this.commHash,
+                    id: this.id
+                },
                 params: { timestamp: new Date().getTime() },
                 timeout: this.waitTimeout,
             }).then((resp) => {
@@ -101,6 +108,7 @@ class Socket {
                 url: `${this.host}/comm/emit`,
                 method: 'post',
                 headers: {
+                    'comm-hash': this.commHash,
                     id: this.id,
                     'Content-Type': 'application/json',
                 },
