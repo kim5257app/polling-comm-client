@@ -50,15 +50,18 @@ export default class Socket {
 
     this.events.on('disconnected', () => {
       this.id = '';
-
-      if (this.connected) {
-        this.doReconnect(0);
-      } else {
-        this.doReconnect(this.reconnTimeout);
-      }
-
+      this.doReconnect(this.reconnTimeout);
       this.connected = false;
 
+    });
+
+    this.events.on('retry', (data: {
+      task: (args: any) => void,
+      args: any
+    }) => {
+      setTimeout(() => {
+        data.task(data.args);
+      }, 1000);
     });
 
     this.events.on('error', (error) => {
@@ -160,7 +163,8 @@ export default class Socket {
           this.eventEmit('error', Error.make(resp.data));
         }
       }).catch((error) => {
-        this.eventEmit('error', error);
+        // this.eventEmit('error', error);
+        this.eventEmit('retry', { task: this.emit, args: data });
       });
     }
   }

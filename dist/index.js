@@ -24,13 +24,13 @@ class Socket {
         });
         this.events.on('disconnected', () => {
             this.id = '';
-            if (this.connected) {
-                this.doReconnect(0);
-            }
-            else {
-                this.doReconnect(this.reconnTimeout);
-            }
+            this.doReconnect(this.reconnTimeout);
             this.connected = false;
+        });
+        this.events.on('retry', (data) => {
+            setTimeout(() => {
+                data.task(data.args);
+            }, 1000);
         });
         this.events.on('error', (error) => {
             this.eventEmit('disconnected');
@@ -119,7 +119,8 @@ class Socket {
                     this.eventEmit('error', js_error_1.default.make(resp.data));
                 }
             }).catch((error) => {
-                this.eventEmit('error', error);
+                // this.eventEmit('error', error);
+                this.eventEmit('retry', { task: this.emit, args: data });
             });
         }
     }
