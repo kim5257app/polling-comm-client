@@ -1,6 +1,6 @@
 import { EventEmitter as Events } from 'events';
 import * as Axios from 'axios';
-import Error from '@kim5257/js-error';
+import Error from '@kim5257app/js-error';
 
 interface Options {
   reconnect?: boolean; // 재연결 시도
