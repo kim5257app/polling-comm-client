@@ -13,13 +13,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "http://kim5257.iptime.org/kim5257/polling-comm.git"
+    "url": "https://github.com/kim5257app/polling-comm-client.git"
   },
   "author": "Jaegu Kim",
   "license": "MIT",
-  "publishConfig": {
-    "@kim5257:registry": "http://kim5257.iptime.org/api/v4/projects/5/packages/npm/"
-  },
   "devDependencies": {
     "@types/debug": "^4.1.5",
     "@types/events": "^3.0.0",
@@ -27,7 +24,7 @@
     "@types/socket.io": "^2.1.11",
     "@typescript-eslint/eslint-plugin": "^4.4.1",
     "@typescript-eslint/parser": "^4.4.1",
-    "@kim5257/polling-comm": "^1.1.5",
+    "@kim5257app/polling-comm": "^1.1.5",
     "eslint": "^7.11.0",
     "eslint-config-airbnb-base": "^14.2.0",
     "eslint-plugin-import": "^2.22.1",
