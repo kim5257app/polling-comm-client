@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const events_1 = require("events");
 const Axios = require("axios");
-const js_error_1 = require("@kim5257/js-error");
+const js_error_1 = require("@kim5257app/js-error");
 class Socket {
     constructor(host, options) {
         this.events = new events_1.EventEmitter(); // 이벤트 객체
